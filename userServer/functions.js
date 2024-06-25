@@ -1,33 +1,19 @@
-import got from 'got';
-import crypto from 'crypto';
 import OAuth from 'oauth-1.0a';
+import got from 'got';
 import qs from 'querystring';
-import { createInterface } from 'readline';
-//import { question, close } from 'readline';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
+import { createInterface } from 'readline';
+
+dotenv.config();
+const consumer_key = process.env.CONSUMER_KEY;
+const consumer_secret = process.env.CONSUMER_SECRET;
 
 const readline = createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
-dotenv.config();
-
-// The code below sets the consumer key and consumer secret from your environment variables
-// To set environment variables on macOS or Linux, run the export commands below from the terminal:
-// export CONSUMER_KEY='YOUR-KEY'
-// export CONSUMER_SECRET='YOUR-SECRET'
-const consumer_key = process.env.CONSUMER_KEY;
-const consumer_secret = process.env.CONSUMER_SECRET;
-
-
-// Be sure to add replace the text of the with the text you wish to Tweet.
-// You can also add parameters to post polls, quote Tweets, Tweet with reply settings, and Tweet to Super Followers in addition to other features.
-const data = {
-    "text": "This is from a Js Script"
-};
-
-const endpointURL = `https://api.twitter.com/2/tweets`;
 
 // this example uses PIN-based OAuth to authorize the user
 const requestTokenURL = 'https://api.twitter.com/oauth/request_token?oauth_callback=oob&x_auth_access_type=write';
@@ -42,7 +28,7 @@ const oauth = OAuth({
     hash_function: (baseString, key) => crypto.createHmac('sha1', key).update(baseString).digest('base64')
 });
 
-async function input(prompt) {
+export async function input(prompt) {
     return new Promise(async (resolve, reject) => {
         readline.question(prompt, (out) => {
             readline.close();
@@ -51,7 +37,7 @@ async function input(prompt) {
     });
 }
 
-async function requestToken() {
+export async function requestToken() {
     const authHeader = oauth.toHeader(oauth.authorize({
         url: requestTokenURL,
         method: 'POST'
@@ -70,7 +56,7 @@ async function requestToken() {
 }
 
 
-async function accessToken({
+export async function accessToken({
     oauth_token,
     oauth_token_secret
 }, verifier) {
@@ -92,7 +78,7 @@ async function accessToken({
 }
 
 
-async function getRequest({
+export async function getRequest({
     oauth_token,
     oauth_token_secret
 }) {
@@ -123,26 +109,3 @@ async function getRequest({
         throw new Error('Unsuccessful request');
     }
 }
-
-
-(async () => {
-    try {
-        // Get request token
-        const oAuthRequestToken = await requestToken();
-        // Get authorization
-        authorizeURL.searchParams.append('oauth_token', oAuthRequestToken.oauth_token);
-        console.log('Please go here and authorize:', authorizeURL.href);
-        const pin = await input('Paste the PIN here: ');
-        // Get the access token
-        const oAuthAccessToken = await accessToken(oAuthRequestToken, pin.trim());
-        // Make the request
-        const response = await getRequest(oAuthAccessToken);
-        console.dir(response, {
-            depth: null
-        });
-    } catch (e) {
-        console.log(e);
-        process.exit(-1);
-    }
-    process.exit();
-})();
