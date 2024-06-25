@@ -1,0 +1,9 @@
+{
+   "type": "module",
+   "dependencies": {
+      "dotenv": "^16.4.5",
+      "got": "^14.4.1",
+      "oauth-1.0a": "^2.2.6",
+      "querystring": "^0.2.1"
+   }
+}
