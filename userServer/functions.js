@@ -14,7 +14,7 @@ const readline = createInterface({
     output: process.stdout
 });
 
-
+const endpointURL = `https://api.twitter.com/2/tweets`;
 // this example uses PIN-based OAuth to authorize the user
 const requestTokenURL = 'https://api.twitter.com/oauth/request_token?oauth_callback=oob&x_auth_access_type=write';
 const authorizeURL = new URL('https://api.twitter.com/oauth/authorize');
@@ -78,34 +78,32 @@ export async function accessToken({
 }
 
 
-export async function getRequest({
-    oauth_token,
-    oauth_token_secret
-}) {
+export async function getRequest(oAuthAccessToken, text) {
+    try {
+        const token = {
+            key: oAuthAccessToken.oauth_token,
+            secret: oAuthAccessToken.oauth_token_secret
+        };
 
-    const token = {
-        key: oauth_token,
-        secret: oauth_token_secret
-    };
+        // Generate Authorization header using stored tokens
+        const authHeader = oauth.toHeader(oauth.authorize({
+            url: endpointURL,
+            method: 'POST'
+        }, token));
 
-    const authHeader = oauth.toHeader(oauth.authorize({
-        url: endpointURL,
-        method: 'POST'
-    }, token));
+        const req = await got.post(endpointURL, {
+            json: { text },
+            responseType: 'json',
+            headers: {
+                Authorization: authHeader["Authorization"],
+                'user-agent': "v2CreateTweetJS",
+                'content-type': "application/json",
+                'accept': "application/json"
+            }
+        });
 
-    const req = await got.post(endpointURL, {
-        json: data,
-        responseType: 'json',
-        headers: {
-            Authorization: authHeader["Authorization"],
-            'user-agent': "v2CreateTweetJS",
-            'content-type': "application/json",
-            'accept': "application/json"
-        }
-    });
-    if (req.body) {
         return req.body;
-    } else {
-        throw new Error('Unsuccessful request');
+    } catch (error) {
+        throw error;
     }
 }
